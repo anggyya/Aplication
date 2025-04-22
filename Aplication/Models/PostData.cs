@@ -7,7 +7,7 @@ using System.Web.UI.WebControls;
 
 namespace Aplication.Models
 {
-    public class PostDataModel
+    public class PostData
     {
         public int Id { get; set; }
         public string Title { get; set; }

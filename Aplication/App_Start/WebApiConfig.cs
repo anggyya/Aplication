@@ -14,7 +14,7 @@ namespace Aplication
             // Web API routes
             config.MapHttpAttributeRoutes();
 
-            //config.Filters.Add(new ExceptionFilterController());
+            config.Filters.Add(new PageData.Filters.ExceptionFilter());
 
             config.Routes.MapHttpRoute(
                 name: "DefaultApi",

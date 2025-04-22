@@ -21,37 +21,47 @@ namespace Aplication.Controllers
 
         [HttpPost]
         [Route("")]
-        public IHttpActionResult GetPagePost(int page = 1, int pagesize = 10)
+        public IHttpActionResult GetPagePost(string page = null, string pagesize = null)
         {
-            if (page <= 0 || pagesize <= 0)
-                return BadRequest("Data yang di input salah, tolong masukan lebih dari 0");
-
-            var response = _httpClient.GetAsync("https://jsonplaceholder.typicode.com/posts").Result;
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                throw new Exception("Gagal mengambil data dari link json");
+                if (!int.TryParse(page, out int pageNumber) || !int.TryParse(pagesize, out int pageSizeNumber))
+                    return BadRequest("Data yang diinput salah, tolong masukkan nilai integer.");
+
+                if (pageNumber <= 0 || pageSizeNumber <= 0)
+                    return BadRequest("Data yang di input salah, tolong masukan lebih dari 0");
+
+                var response = _httpClient.GetAsync("https://jsonplaceholder.typicode.com/posts").Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception("Gagal mengambil data dari link json");
+                }
+
+                var jsonString = response.Content.ReadAsStringAsync().Result;
+                var allPost = JsonConvert.DeserializeObject<List<PostData>>(jsonString);
+
+                var postViewModels = allPost.Select(p => new PostDataView
+                {
+                    Id = p.Id,
+                    Title = p.Title
+                }).ToList();
+
+                var totalItems = postViewModels.Count;
+                var totalPages = (int)Math.Ceiling((double)totalItems / pageSizeNumber);
+
+                var pageData = postViewModels.Skip((pageNumber - 1) * pageSizeNumber).Take(pageSizeNumber).ToArray();
+
+                var result = new
+                {
+                    data = pageData
+                };
+
+                return Ok(result);
             }
-
-            var jsonString = response.Content.ReadAsStringAsync().Result;
-            var allPost = JsonConvert.DeserializeObject<List<PostDataModel>>(jsonString);
-
-            var postViewModels = allPost.Select(p => new PostDataViewModel
+            catch (Exception ex)
             {
-                Id = p.Id,
-                Title = p.Title
-            }).ToList();
-
-            var totalItems = postViewModels.Count;
-            var totalPages = (int)Math.Ceiling((double)totalItems / pagesize);
-
-            var pageData = postViewModels.Skip((page - 1) * pagesize).Take(pagesize).ToArray();
-
-            var result = new
-            {
-                data = pageData
-            };
-
-            return Ok(result);
+                throw new Exception(ex.Message);
+            }
         }
     }
 }
